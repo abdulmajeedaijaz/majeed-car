@@ -106,11 +106,12 @@ const roles = [
         rows={5}
         rowsPerPageOptions={[5, 10, 25, 50]}
         tableStyle={{
-          minWidth: "50rem",
+          minWidth: "100%",
           boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
           overflow: "hidden",
         }}
         className="shadow-lg"
+        responsiveLayout="scroll"
       >
         <Column field="name" header="Name" style={{ width: "33%" }} />
         <Column field="email" header="Email" style={{ width: "33%" }} />

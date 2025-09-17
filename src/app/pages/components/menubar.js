@@ -1,18 +1,24 @@
-"use client"
-import React, { useState } from 'react';
+"use client";
+import React, { useState } from "react";
+import Link from "next/link";
+
 const menuItems = [
-  { name: 'Home', link: '/' },
-  { name: 'Cars', link: '/cars' },
-  {
-    name: 'Bookings',
-    link: '/bookings',
+  { name: "Home", link: "/pages/home" },
+  { name: "Admin", link: "",
     items: [
-      { name: 'View Bookings', link: '/bookings/view' },
-      { name: 'Manage Bookings', link: '/bookings/manage'},
+      { name: "Users", link: "/pages/users" },   
+     ],
+   },
+  {
+    name: "Bookings",
+    link: "/bookings",
+    items: [
+      { name: "View Bookings", link: "/bookings/view" },
+      { name: "Manage Bookings", link: "/bookings/manage" },
     ],
   },
-  { name: 'Contact', link: '/contact' },
-  { name: 'Logout', link: '../page.tsx' },
+  { name: "Customer", link: "/customer" },
+  { name: "Logout", link: "/" }, // replace with your login page
 ];
 
 const Menubar = () => {
@@ -29,21 +35,17 @@ const Menubar = () => {
             onMouseEnter={() => setOpenDropdown(item.name)}
             onMouseLeave={() => setOpenDropdown(null)}
           >
-            <a href={item.link} style={styles.link}>
+            <Link href={item.link} style={styles.link}>
               {item.name}
-            </a>
+            </Link>
 
-            {/* Dropdown if available */}
             {item.items && openDropdown === item.name && (
               <ul style={styles.dropdown}>
                 {item.items.map((subItem) => (
                   <li key={subItem.name} style={styles.dropdownItem}>
-                    <a href={subItem.link} style={styles.link}>
+                    <Link href={subItem.link} style={styles.link}>
                       {subItem.name}
-                      {subItem.label && (
-                        <span style={styles.badge}>{subItem.label}</span>
-                      )}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -57,57 +59,49 @@ const Menubar = () => {
 
 const styles = {
   nav: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    background: '#000000ff',
-    padding: '10px 30px',
-    position: 'relative',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    background: "#000000ff",
+    padding: "10px 30px",
+    position: "relative",
   },
   logo: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: '1.5rem',
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: "1.5rem",
   },
   menu: {
-    listStyle: 'none',
-    display: 'flex',
+    listStyle: "none",
+    display: "flex",
     margin: 0,
     padding: 0,
   },
   menuItem: {
-    marginLeft: '20px',
-    position: 'relative',
+    marginLeft: "20px",
+    position: "relative",
   },
   link: {
-    color: '#fff',
-    textDecoration: 'none',
-    fontSize: '1rem',
-    padding: '5px 10px',
-    display: 'inline-block',
+    color: "#fff",
+    textDecoration: "none",
+    fontSize: "1rem",
+    padding: "5px 10px",
+    display: "inline-block",
   },
   dropdown: {
-    position: 'absolute',
-    top: '100%',
+    position: "absolute",
+    top: "100%",
     left: 0,
-    background: '#000000ff',
-    listStyle: 'none',
+    background: "#000000ff",
+    listStyle: "none",
     margin: 0,
-    padding: '10px 0',
-    minWidth: '180px',
-    borderRadius: '5px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+    padding: "10px 0",
+    minWidth: "180px",
+    borderRadius: "5px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
   },
   dropdownItem: {
     margin: 0,
-  },
-  badge: {
-    background: 'red',
-    color: '#fff',
-    fontSize: '0.7rem',
-    marginLeft: '8px',
-    padding: '2px 6px',
-    borderRadius: '10px',
   },
 };
 
