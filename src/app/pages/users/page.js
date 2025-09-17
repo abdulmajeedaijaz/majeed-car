@@ -73,9 +73,10 @@ export default function UsersPage() {
         borderRadius: "8px",
         boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
         position: "relative",
+        color: "#333",
       }}
     >
-      <h1 style={{ textAlign: "center", marginBottom: "24px" }}>Users</h1>
+      <h1 style={{ textAlign: "center", marginBottom: "24px", fontWeight: "bold",}}>Users</h1>
 
       <div style={{ marginBottom: "16px", textAlign: "right" }}>
         <button onClick={openDrawerForAdd} style={{ padding: "8px 16px" }}>

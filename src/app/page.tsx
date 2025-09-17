@@ -20,6 +20,7 @@ export default function Home() {
         alignItems: "center",
         height: "100vh",
         backgroundColor: "#f0f0f0",
+        color: "#333",
       }}>
         <form 
           onSubmit={handleSubmit} 
@@ -35,7 +36,9 @@ export default function Home() {
           <h2 style={{ 
             textAlign: "center", 
             marginBottom: "20px", 
-            font: "5rem",}}>Login</h2>
+            font: "5rem",
+            fontWeight: "bold",
+          }}>Login</h2>
           <label htmlFor="username" 
           style={{ 
             marginBottom: "5px", 
@@ -52,13 +55,14 @@ export default function Home() {
               padding: "10px",
               borderRadius: "4px",
               border: "1px solid #ccc",
-              fontSize: "16px"
+              fontSize: "16px",
             }}
           />
           <label htmlFor="Email" 
           style={{ 
             marginBottom: "5px", 
-            fontWeight: "bold" }}>Email</label>
+            fontWeight: "bold",
+          }}>Email</label>
           <input
             type="email"
             placeholder="Email"
