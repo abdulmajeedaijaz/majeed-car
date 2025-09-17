@@ -1,237 +1,160 @@
 "use client";
-import React, { useState } from "react";
 
-const initialUsers = [
-  { id: 1, name: "Alice", email: "alice@example.com", role: "admin" },
-  { id: 2, name: "Bob", email: "bob@example.com", role: "user" },
-  { id: 3, name: "Charlie", email: "charlie@example.com", role: "editor" },
-];
+import React, { useState, useEffect } from "react";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+import { Button } from "primereact/button";
+import { Sidebar } from "primereact/sidebar";
+import { InputText } from "primereact/inputtext";
+import { CustomerService } from "../service/CustomerService"; // adjust path
+import { Dropdown } from "primereact/dropdown";
 
-export default function UsersPage() {
-  const [users, setUsers] = useState(initialUsers);
-  const [formData, setFormData] = useState({ name: "", email: "", role: "" });
-  const [editingUserId, setEditingUserId] = useState(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+export default function UsersScreen() {
+  const [users, setUsers] = useState([]);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  const openDrawerForAdd = () => {
-    setFormData({ name: "", email: "", role: "" });
-    setEditingUserId(null);
-    setDrawerOpen(true);
+  useEffect(() => {
+    CustomerService.getCustomersMedium().then((data) => {
+      if (Array.isArray(data)) {
+        // Map old data to match name, email, role structure
+        const formatted = data.map((u) => ({
+          id: u.id,
+          name: u.name || "",
+          email: u.email || `user${u.id}@example.com`,
+          role: u.role || "User",
+        }));
+        setUsers(formatted);
+      }
+    });
+  }, []);
+
+  const openSidebar = (user = null) => {
+    setCurrentUser(
+      user
+        ? { ...user }
+        : { name: "", email: "", role: "" }
+    );
+    setSidebarVisible(true);
   };
 
-  const openDrawerForEdit = (user) => {
-    setFormData({ name: user.name, email: user.email, role: user.role });
-    setEditingUserId(user.id);
-    setDrawerOpen(true);
-  };
-
-  const closeDrawer = () => {
-    setDrawerOpen(false);
-    setEditingUserId(null);
-    setFormData({ name: "", email: "", role: "" });
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.name || !formData.email || !formData.role) return;
-
-    if (editingUserId) {
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === editingUserId ? { ...user, ...formData } : user
-        )
-      );
-    } else {
-      const newUser = {
-        id: users.length ? users[users.length - 1].id + 1 : 1,
-        ...formData,
-      };
-      setUsers((prev) => [...prev, newUser]);
+  const saveUser = () => {
+    if (!currentUser.name || !currentUser.email || !currentUser.role) {
+      alert("Please fill in all fields!");
+      return;
     }
 
-    closeDrawer();
+    if (!currentUser.id) {
+      const newUser = { ...currentUser, id: Date.now() };
+      setUsers([...users, newUser]);
+    } else {
+      const updated = users.map((u) => (u.id === currentUser.id ? currentUser : u));
+      setUsers(updated);
+    }
+    setSidebarVisible(false);
   };
 
   const handleDelete = (id) => {
     if (confirm("Are you sure you want to delete this user?")) {
-      setUsers((prev) => prev.filter((user) => user.id !== id));
+      setUsers(users.filter((u) => u.id !== id));
     }
   };
 
-  return (
-    <div
-      style={{
-        maxWidth: "1500px",
-        margin: "40px auto",
-        padding: "24px",
-        background: "#fff",
-        borderRadius: "8px",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-        position: "relative",
-        color: "#333",
-      }}
-    >
-      <h1 style={{ textAlign: "center", marginBottom: "24px", fontWeight: "bold",}}>Users</h1>
+  const actionBodyTemplate = (rowData) => (
+    <div className="flex gap-2">
+      <Button
+        icon="pi pi-pencil"
+        rounded
+        text
+        severity="warning"
+        onClick={() => openSidebar(rowData)}
+        className="rounded-full border"
+      />
+      <Button
+        icon="pi pi-trash"
+        rounded
+        text
+        severity="danger"
+        onClick={() => handleDelete(rowData.id)}
+        className="rounded-full border"
+      />
+    </div>
+  );
+const roles = [
+  { label: "Admin", value: "Admin" },
+  { label: "Hoster", value: "Hoster" },
+  { label: "User", value: "User" },
+  // Add more roles here
+];
 
-      <div style={{ marginBottom: "16px", textAlign: "right" }}>
-        <button onClick={openDrawerForAdd} style={{ padding: "8px 16px" }}>
-          + Add User
-        </button>
+  return (
+    <div className="card p-8 font-bold">
+      <h2 className="text-center text-2xl font-bold mb-6">Users List</h2>
+
+      <div className="text-right mb-4">
+        <Button
+          label="Add User"
+          icon="pi pi-plus"
+          className="mb-3 rounded-full border border-blue-500 hover:bg-blue-500 hover:text-white transition"
+          onClick={() => openSidebar()}
+        />
       </div>
 
-      {/* Table */}
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            <th style={thStyle}>S.NO</th>
-            <th style={thStyle}>Name</th>
-            <th style={thStyle}>Email</th>
-            <th style={thStyle}>Role</th>
-            <th style={thStyle}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user, index) => (
-            <tr key={user.id}>
-              <td style={tdStyle}>{index + 1}</td>
-              <td style={tdStyle}>{user.name}</td>
-              <td style={tdStyle}>{user.email}</td>
-              <td style={tdStyle}>{user.role}</td>
-              <td style={tdStyle}>
-          <button
-             onClick={() => openDrawerForEdit(user)}
-                 title="Edit"
-                 style={iconButtonStyle}
-                 >
-                ✏️
-             </button>
-        <button
-          onClick={() => handleDelete(user.id)}
-            title="Delete"
-              style={{ ...iconButtonStyle, color: "red" }}
-          >
-            🗑️
-        </button>
-    </td>
+      <DataTable
+        value={users}
+        paginator
+        rows={5}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        tableStyle={{
+          minWidth: "50rem",
+          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+          overflow: "hidden",
+        }}
+        className="shadow-lg"
+      >
+        <Column field="name" header="Name" style={{ width: "33%" }} />
+        <Column field="email" header="Email" style={{ width: "33%" }} />
+        <Column field="role" header="Role" style={{ width: "20%" }} />
+        <Column header="Actions" body={actionBodyTemplate} style={{ width: "14%" }} />
+      </DataTable>
 
-            </tr>
-          ))}
-          {users.length === 0 && (
-            <tr>
-              <td colSpan="5" style={{ textAlign: "center", padding: "12px" }}>
-                No users found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <Sidebar
+        visible={sidebarVisible}
+        onHide={() => setSidebarVisible(false)}
+        position="right"
+        baseZIndex={1000}
+        className="p-6"
+      >
+        <h3 className="text-xl font-bold mb-4">{currentUser?.id ? "Edit User" : "Add User"}</h3>
+        <div className="flex flex-col gap-4">
+  <InputText
+    placeholder="Name"
+    value={currentUser?.name || ""}
+    onChange={(e) => setCurrentUser({ ...currentUser, name: e.target.value })}
+    className="rounded-lg p-2 border border-gray-300"
+  />
+  <InputText
+    placeholder="Email"
+    value={currentUser?.email || ""}
+    onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
+    className="rounded-lg p-2 border border-gray-300"
+  />
+  <Dropdown
+    placeholder="Select Role"
+    value={currentUser?.role || ""}
+    options={roles}
+    onChange={(e) => setCurrentUser({ ...currentUser, role: e.value })}
+    className="rounded-lg p-2 border border-gray-300"
+  />
+  <Button
+    label="Save"
+    icon="pi pi-check"
+    onClick={saveUser}
+    className="rounded-full border border-green-500 hover:bg-green-500 hover:text-white transition"
+  />
+</div>
 
-      {/* Drawer Panel */}
-      {drawerOpen && (
-        <div style={drawerStyle}>
-          <div style={drawerHeaderStyle}>
-            <h2>{editingUserId ? "Edit User" : "Add User"}</h2>
-            <button onClick={closeDrawer} style={closeButtonStyle}>
-              ✕
-            </button>
-          </div>
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <input
-              type="text"
-              name="name"
-              placeholder="Name"
-              value={formData.name}
-              onChange={handleChange}
-              style={inputStyle}
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              style={inputStyle}
-            />
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              style={inputStyle}
-            >
-              <option value="">Select Role</option>
-              <option value="admin">Admin</option>
-              <option value="editor">Editor</option>
-              <option value="user">User</option>
-            </select>
-            <button type="submit" style={{ padding: "10px 16px" }}>
-              {editingUserId ? "Update User" : "Add User"}
-            </button>
-            <button type="button" onClick={closeDrawer} style={{ background: "#eee", padding: "10px 16px" }}>
-              Cancel
-            </button>
-          </form>
-        </div>
-      )}
+      </Sidebar>
     </div>
   );
 }
-
-// Styles
-const thStyle = {
-  borderBottom: "1px solid #eee",
-  padding: "8px",
-  textAlign: "left",
-};
-
-const tdStyle = {
-  borderBottom: "1px solid #f5f5f5",
-  padding: "8px",
-};
-
-const drawerStyle = {
-  position: "fixed",
-  top: 0,
-  right: 0,
-  width: "360px",
-  height: "100%",
-  background: "#fafafa",
-  boxShadow: "-2px 0 8px rgba(0,0,0,0.1)",
-  padding: "24px",
-  zIndex: 1000,
-  transition: "transform 0.3s ease-in-out",
-  display: "flex",
-  flexDirection: "column",
-};
-
-const drawerHeaderStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "24px",
-};
-
-const closeButtonStyle = {
-  background: "none",
-  border: "none",
-  fontSize: "20px",
-  cursor: "pointer",
-};
-
-const inputStyle = {
-  padding: "10px",
-  border: "1px solid #ddd",
-  borderRadius: "4px",
-};
-
-const iconButtonStyle = {
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  fontSize: "18px",
-  marginRight: "8px",
-};

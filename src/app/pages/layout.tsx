@@ -1,6 +1,9 @@
 import "../globals.css";
 import type { Metadata } from "next";
-import MenuBar from "./components/menubar"; // ✅ adjust path if needed
+import MenuBar from "./components/menubar"; 
+import 'primereact/resources/themes/saga-blue/theme.css';
+import 'primereact/resources/primereact.min.css';
+import 'primeicons/primeicons.css';
 
 export const metadata: Metadata = {
   title: "My App",
