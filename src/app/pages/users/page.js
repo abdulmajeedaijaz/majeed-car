@@ -14,10 +14,12 @@ export default function UsersScreen() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
+  // Simulate the logged-in user's role
+  const currentLoggedInRole = "Admin"; // change this dynamically based on auth
+
   useEffect(() => {
     CustomerService.getCustomersMedium().then((data) => {
       if (Array.isArray(data)) {
-        // Map old data to match name, email, role structure
         const formatted = data.map((u) => ({
           id: u.id,
           name: u.name || "",
@@ -30,11 +32,7 @@ export default function UsersScreen() {
   }, []);
 
   const openSidebar = (user = null) => {
-    setCurrentUser(
-      user
-        ? { ...user }
-        : { name: "", email: "", role: "" }
-    );
+    setCurrentUser(user ? { ...user } : { name: "", email: "", role: "" });
     setSidebarVisible(true);
   };
 
@@ -48,7 +46,9 @@ export default function UsersScreen() {
       const newUser = { ...currentUser, id: Date.now() };
       setUsers([...users, newUser]);
     } else {
-      const updated = users.map((u) => (u.id === currentUser.id ? currentUser : u));
+      const updated = users.map((u) =>
+        u.id === currentUser.id ? currentUser : u
+      );
       setUsers(updated);
     }
     setSidebarVisible(false);
@@ -80,12 +80,14 @@ export default function UsersScreen() {
       />
     </div>
   );
-const roles = [
-  { label: "Admin", value: "Admin" },
-  { label: "Hoster", value: "Hoster" },
-  { label: "User", value: "User" },
-  // Add more roles here
-];
+
+  const roles = [
+    { label: "Admin", value: "Admin" },
+    { label: "Hoster", value: "Hoster" },
+    { label: "User", value: "User" },
+    { label: "Driver", value: "Driver" },
+    // Add more roles here
+  ];
 
   return (
     <div className="card p-8 font-bold">
@@ -116,7 +118,11 @@ const roles = [
         <Column field="name" header="Name" style={{ width: "33%" }} />
         <Column field="email" header="Email" style={{ width: "33%" }} />
         <Column field="role" header="Role" style={{ width: "20%" }} />
-        <Column header="Actions" body={actionBodyTemplate} style={{ width: "14%" }} />
+        <Column
+          header="Actions"
+          body={actionBodyTemplate}
+          style={{ width: "14%" }}
+        />
       </DataTable>
 
       <Sidebar
@@ -126,35 +132,53 @@ const roles = [
         baseZIndex={1000}
         className="p-6"
       >
-        <h3 className="text-xl font-bold mb-4">{currentUser?.id ? "Edit User" : "Add User"}</h3>
+        <h3 className="text-xl font-bold mb-4">
+          {currentUser?.id ? "Edit User" : "Add User"}
+        </h3>
         <div className="flex flex-col gap-4">
-  <InputText
-    placeholder="Name"
-    value={currentUser?.name || ""}
-    onChange={(e) => setCurrentUser({ ...currentUser, name: e.target.value })}
-    className="rounded-lg p-2 border border-gray-300"
-  />
-  <InputText
-    placeholder="Email"
-    value={currentUser?.email || ""}
-    onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
-    className="rounded-lg p-2 border border-gray-300"
-  />
-  <Dropdown
-    placeholder="Select Role"
-    value={currentUser?.role || ""}
-    options={roles}
-    onChange={(e) => setCurrentUser({ ...currentUser, role: e.value })}
-    className="rounded-lg p-2 border border-gray-300"
-  />
-  <Button
-    label="Save"
-    icon="pi pi-check"
-    onClick={saveUser}
-    className="rounded-full border border-green-500 hover:bg-green-500 hover:text-white transition"
-  />
-</div>
+          <InputText
+            placeholder="Name"
+            value={currentUser?.name || ""}
+            onChange={(e) =>
+              setCurrentUser({ ...currentUser, name: e.target.value })
+            }
+            className="rounded-lg p-2 border border-gray-300"
+          />
+          <InputText
+            placeholder="Email"
+            value={currentUser?.email || ""}
+            onChange={(e) =>
+              setCurrentUser({ ...currentUser, email: e.target.value })
+            }
+            className="rounded-lg p-2 border border-gray-300"
+          />
 
+          {currentLoggedInRole === "Admin" ||
+          currentLoggedInRole === "Hoster" ? (
+            <Dropdown
+              placeholder="Select Role"
+              value={currentUser?.role || ""}
+              options={roles}
+              onChange={(e) =>
+                setCurrentUser({ ...currentUser, role: e.value })
+              }
+              className="rounded-lg p-2 border border-gray-300"
+            />
+          ) : (
+            <InputText
+              value={currentUser?.role || ""}
+              disabled
+              className="rounded-lg p-2 border border-gray-300 bg-gray-100"
+            />
+          )}
+
+          <Button
+            label="Save"
+            icon="pi pi-check"
+            onClick={saveUser}
+            className="rounded-full border border-green-500 hover:bg-green-500 hover:text-white transition"
+          />
+        </div>
       </Sidebar>
     </div>
   );
