@@ -12,7 +12,7 @@ export default function Home() {
   const handleSubmit = (e) => {
     e.preventDefault();
     alert(`User name: ${username}\nEmail: ${email}\nPassword: ${password}`);
-    router.push("/pages/users"); // Redirect to users page
+    router.push("/pages/home"); // Redirect to users page
   };
 
   return (
