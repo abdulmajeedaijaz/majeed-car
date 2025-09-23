@@ -1,193 +1,185 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
-import { Button } from "primereact/button";
+import { useState, useEffect } from "react";
 import { Sidebar } from "primereact/sidebar";
 import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
+import { Button } from "primereact/button";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+
+import "primereact/resources/themes/saga-blue/theme.css";
+import "primereact/resources/primereact.min.css";
+import "primeicons/primeicons.css";
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [editingUser, setEditingUser] = useState(null);
 
-  const currentLoggedInRole = "Admin";
+  const roles = ["admin", "hoster", "user"];
+
+  // Fetch users from API
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch("/api/users");
+      if (!res.ok) throw new Error("Failed to fetch users");
+      const data = await res.json();
+
+      // Normalize id (MongoDB returns _id)
+      const normalized = data.map((u) => ({
+        ...u,
+        id: u._id || u.id,
+      }));
+
+      setUsers(normalized);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch('/api/users');
-      if (!response.ok) throw new Error('Failed to fetch users');
-
-      const data = await response.json();
-      setUsers(data);
-    } catch (error) {
-      console.error(error);
-      alert('Failed to load users');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const openSidebar = (user = null) => {
-    setCurrentUser(user ? { ...user } : { name: "", email: "", role: "" });
+  const openEditSidebar = (user) => {
+    setEditingUser(user);
     setSidebarVisible(true);
   };
 
-  const saveUser = async () => {
-    if (!currentUser.name || !currentUser.email || !currentUser.role) {
-      alert("Please fill in all fields!");
-      return;
+  const openAddSidebar = () => {
+    setEditingUser({ name: "", email: "", role: "user" });
+    setSidebarVisible(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      const method = editingUser.id ? "PUT" : "POST";
+      const url = editingUser.id
+        ? `/api/users/${editingUser.id}`
+        : "/api/users";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingUser),
+      });
+
+      if (res.ok) {
+        fetchUsers();
+        setSidebarVisible(false);
+      } else {
+        console.error("Failed to save user");
+      }
+    } catch (err) {
+      console.error(err);
     }
+  };
+
+  const handleDelete = async (userId) => {
+    if (!confirm("Are you sure you want to delete this user?")) return;
 
     try {
-      if (!currentUser.id) {
-        const response = await fetch('/api/users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(currentUser),
-        });
-        if (!response.ok) throw new Error('Failed to create user');
-        const newUser = await response.json();
-        setUsers([...users, newUser]);
+      const res = await fetch(`/api/users/${userId}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchUsers();
       } else {
-        const response = await fetch(`/api/users/${currentUser.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(currentUser),
-        });
-        if (!response.ok) throw new Error('Failed to update user');
-        setUsers(users.map(u => (u.id === currentUser.id ? currentUser : u)));
+        console.error("Failed to delete user");
       }
-
-      setSidebarVisible(false);
-    } catch (error) {
-      console.error(error);
-      alert('Failed to save user');
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      try {
-        const response = await fetch(`/api/users/${id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('Failed to delete user');
-        setUsers(users.filter(u => u.id !== id));
-      } catch (error) {
-        console.error(error);
-        alert('Failed to delete user');
-      }
-    }
-  };
-
-  const actionBodyTemplate = (rowData) => (
+  const actionTemplate = (rowData) => (
     <div className="flex gap-2">
       <Button
+        label="Edit"
         icon="pi pi-pencil"
-        rounded
-        text
-        severity="warning"
-        onClick={() => openSidebar(rowData)}
-        className="rounded-full border"
+        className="p-button-warning p-button-sm"
+        onClick={() => openEditSidebar(rowData)}
       />
       <Button
+        label="Delete"
         icon="pi pi-trash"
-        rounded
-        text
-        severity="danger"
+        className="p-button-danger p-button-sm"
         onClick={() => handleDelete(rowData.id)}
-        className="rounded-full border"
       />
     </div>
   );
 
-  const roles = [
-    { label: "Admin", value: "Admin" },
-    { label: "Hoster", value: "Hoster" },
-    { label: "User", value: "User" },
-    { label: "Driver", value: "Driver" },
-  ];
-
   return (
-    <div className="card p-8 font-bold">
-      <h2 className="text-center text-2xl font-bold mb-6">Users List</h2>
+    <div className="p-4">
+      {/* Header with title + Add button */}
+      <div className="flex justify-between items-center mb-4">
+<h2 style={{ textAlign: "center", width: "100%", fontWeight: "bold", fontSize: "1.5rem" }}>
+  Users
+</h2>
 
-      <div className="text-right mb-4">
         <Button
           label="Add User"
           icon="pi pi-plus"
-          className="mb-3 rounded-full border border-blue-500 hover:bg-blue-500 hover:text-white transition"
-          onClick={() => openSidebar()}
+          className="p-button-success"
+          onClick={openAddSidebar}
         />
       </div>
 
-      <DataTable
-        value={users}
-        paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        loading={loading}
-        tableStyle={{ minWidth: "100%" }}
-        className="shadow-lg"
-      >
-        <Column field="name" header="Name" style={{ width: "33%" }} />
-        <Column field="email" header="Email" style={{ width: "33%" }} />
-        <Column field="role" header="Role" style={{ width: "20%" }} />
-        <Column header="Actions" body={actionBodyTemplate} style={{ width: "14%" }} />
+      {/* Users table */}
+      <DataTable value={users} paginator rows={5} stripedRows>
+        <Column field="name" header="Name" />
+        <Column field="email" header="Email" />
+        <Column field="role" header="Role" />
+        <Column body={actionTemplate} header="Actions" />
       </DataTable>
 
+      {/* Sidebar for Add/Edit */}
       <Sidebar
         visible={sidebarVisible}
         onHide={() => setSidebarVisible(false)}
         position="right"
-        className="p-6"
+        header={editingUser?.id ? "Edit User" : "Add User"}
       >
-        <h3 className="text-xl font-bold mb-4">
-          {currentUser?.id ? "Edit User" : "Add User"}
-        </h3>
-        <div className="flex flex-col gap-4">
-          <InputText
-            placeholder="Name"
-            value={currentUser?.name || ""}
-            onChange={(e) => setCurrentUser({ ...currentUser, name: e.target.value })}
-            className="p-2 border"
-          />
-          <InputText
-            placeholder="Email"
-            value={currentUser?.email || ""}
-            onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
-            className="p-2 border"
-          />
-
-          {currentLoggedInRole === "Admin" || currentLoggedInRole === "Hoster" ? (
-            <Dropdown
-              placeholder="Select Role"
-              value={currentUser?.role || ""}
-              options={roles}
-              onChange={(e) => setCurrentUser({ ...currentUser, role: e.value })}
-              className="p-2 border"
+        {editingUser && (
+          <div className="p-fluid">
+            <div className="p-field mb-3">
+              <label htmlFor="name">Name</label>
+              <InputText
+                id="name"
+                value={editingUser.name}
+                onChange={(e) =>
+                  setEditingUser({ ...editingUser, name: e.target.value })
+                }
+              />
+            </div>
+            <div className="p-field mb-3">
+              <label htmlFor="email">Email</label>
+              <InputText
+                id="email"
+                value={editingUser.email}
+                onChange={(e) =>
+                  setEditingUser({ ...editingUser, email: e.target.value })
+                }
+              />
+            </div>
+            <div className="p-field mb-3">
+              <label htmlFor="role">Role</label>
+              <Dropdown
+                id="role"
+                value={editingUser.role}
+                options={roles}
+                onChange={(e) =>
+                  setEditingUser({ ...editingUser, role: e.value })
+                }
+              />
+            </div>
+            <Button
+              label="Save"
+              icon="pi pi-check"
+              onClick={handleSave}
+              className="p-button-success"
             />
-          ) : (
-            <InputText
-              value={currentUser?.role || ""}
-              disabled
-              className="p-2 border bg-gray-100"
-            />
-          )}
-
-          <Button
-            label="Save"
-            icon="pi pi-check"
-            onClick={saveUser}
-            className="border border-green-500 hover:bg-green-500"
-          />
-        </div>
+          </div>
+        )}
       </Sidebar>
     </div>
   );
