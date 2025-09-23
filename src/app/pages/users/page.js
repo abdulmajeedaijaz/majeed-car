@@ -6,57 +6,83 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Sidebar } from "primereact/sidebar";
 import { InputText } from "primereact/inputtext";
-import { CustomerService } from "../service/CustomerService"; // adjust path
 import { Dropdown } from "primereact/dropdown";
 
-export default function UsersScreen() {
+export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Simulate the logged-in user's role
-  const currentLoggedInRole = "Admin"; // change this dynamically based on auth
+  const currentLoggedInRole = "Admin";
 
   useEffect(() => {
-    CustomerService.getCustomersMedium().then((data) => {
-      if (Array.isArray(data)) {
-        const formatted = data.map((u) => ({
-          id: u.id,
-          name: u.name || "",
-          email: u.email || `user${u.id}@example.com`,
-          role: u.role || "User",
-        }));
-        setUsers(formatted);
-      }
-    });
+    fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/users');
+      if (!response.ok) throw new Error('Failed to fetch users');
+
+      const data = await response.json();
+      setUsers(data);
+    } catch (error) {
+      console.error(error);
+      alert('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const openSidebar = (user = null) => {
     setCurrentUser(user ? { ...user } : { name: "", email: "", role: "" });
     setSidebarVisible(true);
   };
 
-  const saveUser = () => {
+  const saveUser = async () => {
     if (!currentUser.name || !currentUser.email || !currentUser.role) {
       alert("Please fill in all fields!");
       return;
     }
 
-    if (!currentUser.id) {
-      const newUser = { ...currentUser, id: Date.now() };
-      setUsers([...users, newUser]);
-    } else {
-      const updated = users.map((u) =>
-        u.id === currentUser.id ? currentUser : u
-      );
-      setUsers(updated);
+    try {
+      if (!currentUser.id) {
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentUser),
+        });
+        if (!response.ok) throw new Error('Failed to create user');
+        const newUser = await response.json();
+        setUsers([...users, newUser]);
+      } else {
+        const response = await fetch(`/api/users/${currentUser.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentUser),
+        });
+        if (!response.ok) throw new Error('Failed to update user');
+        setUsers(users.map(u => (u.id === currentUser.id ? currentUser : u)));
+      }
+
+      setSidebarVisible(false);
+    } catch (error) {
+      console.error(error);
+      alert('Failed to save user');
     }
-    setSidebarVisible(false);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm("Are you sure you want to delete this user?")) {
-      setUsers(users.filter((u) => u.id !== id));
+      try {
+        const response = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Failed to delete user');
+        setUsers(users.filter(u => u.id !== id));
+      } catch (error) {
+        console.error(error);
+        alert('Failed to delete user');
+      }
     }
   };
 
@@ -86,7 +112,6 @@ export default function UsersScreen() {
     { label: "Hoster", value: "Hoster" },
     { label: "User", value: "User" },
     { label: "Driver", value: "Driver" },
-    // Add more roles here
   ];
 
   return (
@@ -107,29 +132,20 @@ export default function UsersScreen() {
         paginator
         rows={5}
         rowsPerPageOptions={[5, 10, 25, 50]}
-        tableStyle={{
-          minWidth: "100%",
-          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
-          overflow: "hidden",
-        }}
+        loading={loading}
+        tableStyle={{ minWidth: "100%" }}
         className="shadow-lg"
-        responsiveLayout="scroll"
       >
         <Column field="name" header="Name" style={{ width: "33%" }} />
         <Column field="email" header="Email" style={{ width: "33%" }} />
         <Column field="role" header="Role" style={{ width: "20%" }} />
-        <Column
-          header="Actions"
-          body={actionBodyTemplate}
-          style={{ width: "14%" }}
-        />
+        <Column header="Actions" body={actionBodyTemplate} style={{ width: "14%" }} />
       </DataTable>
 
       <Sidebar
         visible={sidebarVisible}
         onHide={() => setSidebarVisible(false)}
         position="right"
-        baseZIndex={1000}
         className="p-6"
       >
         <h3 className="text-xl font-bold mb-4">
@@ -139,36 +155,29 @@ export default function UsersScreen() {
           <InputText
             placeholder="Name"
             value={currentUser?.name || ""}
-            onChange={(e) =>
-              setCurrentUser({ ...currentUser, name: e.target.value })
-            }
-            className="rounded-lg p-2 border border-gray-300"
+            onChange={(e) => setCurrentUser({ ...currentUser, name: e.target.value })}
+            className="p-2 border"
           />
           <InputText
             placeholder="Email"
             value={currentUser?.email || ""}
-            onChange={(e) =>
-              setCurrentUser({ ...currentUser, email: e.target.value })
-            }
-            className="rounded-lg p-2 border border-gray-300"
+            onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
+            className="p-2 border"
           />
 
-          {currentLoggedInRole === "Admin" ||
-          currentLoggedInRole === "Hoster" ? (
+          {currentLoggedInRole === "Admin" || currentLoggedInRole === "Hoster" ? (
             <Dropdown
               placeholder="Select Role"
               value={currentUser?.role || ""}
               options={roles}
-              onChange={(e) =>
-                setCurrentUser({ ...currentUser, role: e.value })
-              }
-              className="rounded-lg p-2 border border-gray-300"
+              onChange={(e) => setCurrentUser({ ...currentUser, role: e.value })}
+              className="p-2 border"
             />
           ) : (
             <InputText
               value={currentUser?.role || ""}
               disabled
-              className="rounded-lg p-2 border border-gray-300 bg-gray-100"
+              className="p-2 border bg-gray-100"
             />
           )}
 
@@ -176,7 +185,7 @@ export default function UsersScreen() {
             label="Save"
             icon="pi pi-check"
             onClick={saveUser}
-            className="rounded-full border border-green-500 hover:bg-green-500 hover:text-white transition"
+            className="border border-green-500 hover:bg-green-500"
           />
         </div>
       </Sidebar>

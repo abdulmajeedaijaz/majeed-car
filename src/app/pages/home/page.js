@@ -13,7 +13,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await fetch("/api/stats"); // backend endpoint
+        const res = await fetch("../api/users"); // backend endpoint
         const data = await res.json();
         setStats(data);
       } catch (error) {
