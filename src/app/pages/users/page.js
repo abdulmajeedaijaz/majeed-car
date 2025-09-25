@@ -16,12 +16,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-<<<<<<< HEAD
 
-  const roles = ["admin", "hoster", "user"];
-
-  // Fetch users from API
-=======
   const roles = ["admin", "hoster", "user"];
 
   // ✅ Run access control + fetch users
@@ -43,17 +38,12 @@ export default function UsersPage() {
     fetchUsers(); // ✅ Fetch only after role check
   }, []);
 
->>>>>>> 92dae6c (commit first)
   const fetchUsers = async () => {
     try {
       const res = await fetch("/api/users");
       if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
 
-<<<<<<< HEAD
-      // Normalize id (MongoDB returns _id)
-=======
->>>>>>> 92dae6c (commit first)
       const normalized = data.map((u) => ({
         ...u,
         id: u._id || u.id,
@@ -65,13 +55,6 @@ export default function UsersPage() {
     }
   };
 
-<<<<<<< HEAD
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-=======
->>>>>>> 92dae6c (commit first)
   const openEditSidebar = (user) => {
     setEditingUser(user);
     setSidebarVisible(true);
@@ -140,19 +123,17 @@ export default function UsersPage() {
 
   return (
     <div className="p-4">
-<<<<<<< HEAD
-      {/* Header with title + Add button */}
       <div className="flex justify-between items-center mb-4">
-<h2 style={{ textAlign: "center", width: "100%", fontWeight: "bold", fontSize: "1.5rem" }}>
-  Users
-</h2>
-
-=======
-      <div className="flex justify-between items-center mb-4">
-        <h2 style={{ textAlign: "center", width: "100%", fontWeight: "bold", fontSize: "1.5rem" }}>
+        <h2
+          style={{
+            textAlign: "center",
+            width: "100%",
+            fontWeight: "bold",
+            fontSize: "1.5rem",
+          }}
+        >
           Users
         </h2>
->>>>>>> 92dae6c (commit first)
         <Button
           label="Add User"
           icon="pi pi-plus"
@@ -161,10 +142,6 @@ export default function UsersPage() {
         />
       </div>
 
-<<<<<<< HEAD
-      {/* Users table */}
-=======
->>>>>>> 92dae6c (commit first)
       <DataTable value={users} paginator rows={5} stripedRows>
         <Column field="name" header="Name" />
         <Column field="email" header="Email" />
@@ -172,10 +149,6 @@ export default function UsersPage() {
         <Column body={actionTemplate} header="Actions" />
       </DataTable>
 
-<<<<<<< HEAD
-      {/* Sidebar for Add/Edit */}
-=======
->>>>>>> 92dae6c (commit first)
       <Sidebar
         visible={sidebarVisible}
         onHide={() => setSidebarVisible(false)}

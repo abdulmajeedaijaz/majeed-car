@@ -24,11 +24,7 @@ export default function Dashboard() {
   }, []);
 
   const cards = [
-<<<<<<< HEAD
-    { title: "Users", desc: "Manage users", total: stats.users, link: "../../users" },
-=======
     { title: "Users", desc: "Manage users", total: stats.users, link: "../pages/users" },
->>>>>>> 92dae6c (commit first)
     { title: "Cars", desc: "Manage cars", total: stats.cars, link: "/cars" },
     { title: "Bookings", desc: "View bookings", total: stats.bookings, link: "/bookings" },
     { title: "Settings", desc: "System settings", total: "Configure system", link: "/settings" },
